@@ -10,34 +10,28 @@ import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.teinelund.application.ApplicationException;
 
 public class CommandLineOptionsImpl implements CommandLineOptions {
-
-    private final String OPTION_HELP_SHORT = "h";
-    private final String OPTION_HELP_LONG = "help";
-    private final String OPTION_VERSION_SHORT = "v";
-    private final String OPTION_VERSION_LONG = "version";
-    private final String OPTION_BOUNDS_SHORT = "b";
-    private final String OPTION_BOUNDS_LONG = "bounds";
-    private final String OPTION_INBOUND_SHORT = "i";
-    private final String OPTION_INBOUND_LONG = "inbound";
-    private final String OPTION_OUTBOUND_SHORT = "o";
-    private final String OPTION_OUTBOUND_LONG = "outbound";
-    private final String OPTION_PROJECT_PATH_SHORT = "p";
-    private final String OPTION_PROJECT_PATH_LONG = "project-path";
+    private Options cliOptions;
     private Map<OptionType, List<String>> options = new HashMap<>();
     private Map<String, OptionType> mapFromStringToOptionType = new HashMap<>();
 
-    public CommandLineOptionsImpl(final String[] args) throws ParseException {
+    public CommandLineOptionsImpl(final String[] args) {
         initialize();
-        Options options = createOptions();
+        createOptions();
         CommandLineParser commandLineParser = new DefaultParser();
-        CommandLine commandLine = commandLineParser.parse(options, args);
-        processCommandLineOptions(commandLine);
+
+        try {
+            CommandLine commandLine = commandLineParser.parse(this.cliOptions, args);
+            processCommandLineOptions(commandLine);
+        } catch (ParseException e) {
+            throw new ApplicationException("ParseException: " + e.getMessage());
+        }
     }
 
     void initialize() {
@@ -55,19 +49,18 @@ public class CommandLineOptionsImpl implements CommandLineOptions {
         mapFromStringToOptionType.put(OPTION_PROJECT_PATH_LONG, OptionType.PROJECT);
     }
 
-    Options createOptions() {
-        Options options = new Options();
-        options.addOption(Option.builder(OPTION_PROJECT_PATH_SHORT).longOpt(OPTION_PROJECT_PATH_LONG).hasArg().argName("PATH")
+    void createOptions() {
+        cliOptions = new Options();
+        cliOptions.addOption(Option.builder(OPTION_PROJECT_PATH_SHORT).longOpt(OPTION_PROJECT_PATH_LONG).hasArg().argName("PATH")
                 .desc("Project PATH. Example: \'-p /Users/ada/repos/orderengine\'. Mandatory.").build());
-        options.addOption(Option.builder(OPTION_INBOUND_SHORT).longOpt(OPTION_INBOUND_LONG).hasArg().argName("ARGUMENT")
+        cliOptions.addOption(Option.builder(OPTION_INBOUND_SHORT).longOpt(OPTION_INBOUND_LONG).hasArg().argName("ARGUMENT")
                 .desc("Inbound ARGUMENT. Example: \'-i rest,web\'. ARGUMENT is case insensive. Optional.").build());
-        options.addOption(Option.builder(OPTION_OUTBOUND_SHORT).longOpt(OPTION_OUTBOUND_LONG).hasArg().argName("ARGUMENT")
+        cliOptions.addOption(Option.builder(OPTION_OUTBOUND_SHORT).longOpt(OPTION_OUTBOUND_LONG).hasArg().argName("ARGUMENT")
                 .desc("Outbound ARGUMENT. Example: \'-o res,dao,system,log\'. ARGUMENT is case insensive. Optional.").build());
-        options.addOption(Option.builder(OPTION_BOUNDS_SHORT).longOpt(OPTION_BOUNDS_LONG)
+        cliOptions.addOption(Option.builder(OPTION_BOUNDS_SHORT).longOpt(OPTION_BOUNDS_LONG)
                 .desc("Which inbound and outbound technologies are used. Example: \'-b\'. Optional.").build());
-        options.addOption(Option.builder(OPTION_HELP_SHORT).longOpt(OPTION_HELP_LONG).desc("Prints this page.").build());
-        options.addOption(Option.builder(OPTION_VERSION_SHORT).longOpt(OPTION_VERSION_LONG).desc("Show version.").build());
-        return options;
+        cliOptions.addOption(Option.builder(OPTION_HELP_SHORT).longOpt(OPTION_HELP_LONG).desc("Prints this page.").build());
+        cliOptions.addOption(Option.builder(OPTION_VERSION_SHORT).longOpt(OPTION_VERSION_LONG).desc("Show version.").build());
     }
 
 
@@ -122,6 +115,12 @@ public class CommandLineOptionsImpl implements CommandLineOptions {
             return list;
         }
 
+    }
+
+    @Override
+    public void createHelpFormatter(String header, String footer) {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp(100, "java-source-code-query", header, this.cliOptions, footer, true);
     }
 
 }
