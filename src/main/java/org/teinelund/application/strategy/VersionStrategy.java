@@ -2,7 +2,7 @@ package org.teinelund.application.strategy;
 
 import org.teinelund.application.Application;
 
-public class VersionStrategy implements Strategy {
+class VersionStrategy implements Strategy {
 
     @Override
     public void process() {

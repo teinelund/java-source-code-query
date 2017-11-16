@@ -2,7 +2,7 @@ package org.teinelund.application.strategy;
 
 import org.teinelund.application.commandline.CommandLineOptions;
 
-public class HelpStragey implements Strategy {
+class HelpStragey implements Strategy {
 
     private CommandLineOptions options;
 
