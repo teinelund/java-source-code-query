@@ -8,10 +8,11 @@ import org.teinelund.application.controller.ControllerFactoryImpl;
 import org.teinelund.application.verify.VerifyCommandLineOptions;
 import org.teinelund.application.verify.Verify;
 
+import java.io.IOException;
+
 public class Application
 {
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) throws IOException {
         CommandLineOptions options = new CommandLineOptionsImpl(args);
         Verify verifyOptions = new VerifyCommandLineOptions(options, null);
         verifyOptions.verify();

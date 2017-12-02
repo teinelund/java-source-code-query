@@ -1,6 +1,8 @@
 package org.teinelund.application.controller;
 
 import org.teinelund.application.ApplicationException;
+import org.teinelund.application.controller.domain.MavenPomFile;
+import org.teinelund.application.controller.domain.MavenPomFileImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,7 +34,7 @@ class PomFileReaderImpl implements PomFileReader {
     }
 
     @Override
-    public MavenProject readPomFile(Path mavenPomFilePath) throws IOException {
+    public MavenPomFile readPomFile(Path mavenPomFilePath) throws IOException {
         if ( ! "pom.xml".equals(mavenPomFilePath.getFileName().toString())) {
             throw new ApplicationException("file \"" + mavenPomFilePath + "\" is not a pom.xml file.");
         }
@@ -41,7 +43,7 @@ class PomFileReaderImpl implements PomFileReader {
         return fetchPomFileInformtion(mavenPomFilePath, list);
     }
 
-    MavenProject fetchPomFileInformtion(Path mavenPomFilePath, List<String> pomFileLines) throws IOException {
+    MavenPomFile fetchPomFileInformtion(Path mavenPomFilePath, List<String> pomFileLines) throws IOException {
         boolean isInsideParentTag = false;
         String artifactId = "";
         String groupId = "";
@@ -83,6 +85,6 @@ class PomFileReaderImpl implements PomFileReader {
                 break;
             }
         }
-        return new MavenProjectImpl(mavenPomFilePath, groupId, artifactId, version);
+        return new MavenPomFileImpl(mavenPomFilePath, groupId, artifactId, version);
     }
 }

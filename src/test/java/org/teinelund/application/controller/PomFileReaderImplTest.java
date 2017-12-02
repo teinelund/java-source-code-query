@@ -2,6 +2,7 @@ package org.teinelund.application.controller;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.teinelund.application.controller.domain.MavenPomFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -31,7 +32,7 @@ class PomFileReaderImplTest {
         List<String> list = new LinkedList<>();
         list.add("    <groupId>" + GROUP_ID + "</groupId>");
         // Test
-        MavenProject result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, list);
+        MavenPomFile result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, list);
         // Verify
         assertEquals(GROUP_ID, result.getGroupId());
     }
@@ -42,7 +43,7 @@ class PomFileReaderImplTest {
         List<String> list = new LinkedList<>();
         list.add("    <groupId>" + GROUP_ID + "</groupId>" + System.lineSeparator());
         // Test
-        MavenProject result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, list);
+        MavenPomFile result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, list);
         // Verify
         assertEquals(GROUP_ID, result.getGroupId());
     }
@@ -51,7 +52,7 @@ class PomFileReaderImplTest {
     public void fetchPomFileInformtionWherePomFileWithoutParent() throws IOException {
         // Initialize
         // Test
-        MavenProject result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, createLegalPomFileWithoutParent());
+        MavenPomFile result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, createLegalPomFileWithoutParent());
         // Verify
         assertEquals(GROUP_ID, result.getGroupId());
         assertEquals(ARTIFACT_ID, result.getArtifactId());
@@ -86,7 +87,7 @@ class PomFileReaderImplTest {
     public void fetchPomFileInformtionWherePomFileWithParent() throws IOException {
         // Initialize
         // Test
-        MavenProject result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, createLegalPomFileWithParent());
+        MavenPomFile result = ((PomFileReaderImpl) reader).fetchPomFileInformtion(pomFilePath, createLegalPomFileWithParent());
         // Verify
         assertEquals(GROUP_ID, result.getGroupId());
         assertEquals(ARTIFACT_ID, result.getArtifactId());

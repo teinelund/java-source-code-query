@@ -2,10 +2,12 @@ package org.teinelund.application.controller;
 
 import org.teinelund.application.commandline.CommandLineOptions;
 import org.teinelund.application.commandline.OptionType;
+import org.teinelund.application.controller.domain.MavenPomFile;
 import org.teinelund.application.strategy.Strategy;
 import org.teinelund.application.strategy.StrategyFactory;
 import org.teinelund.application.strategy.StrategyFactoryImpl;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +23,7 @@ class ControllerImpl implements Controller {
     }
 
     @Override
-    public void selectStrategy() {
+    public void selectStrategy() throws IOException {
         Set<OptionType> optionTypes = options.getOptionTypes();
         if (optionTypes.contains(OptionType.HELP)) {
             this.strategy = this.stategyFactory.createHelpStrategy(this.options);
@@ -36,10 +38,14 @@ class ControllerImpl implements Controller {
         List<String> projects = options.getCommandLineOptionValue(OptionType.PROJECT);
         PomFileReader reader = new PomFileReaderImpl();
         FindMavenProject findMavenProject = new FindMavenProjectImpl(projects, reader);
-        List<MavenProject> mavenProjects = findMavenProject.getMavenProjects();
-        for (MavenProject mavenProject : mavenProjects) {
-            System.out.println("  path: " + mavenProject.getPath().toString());
-            System.out.println("  [" + mavenProject.getGroupId() + " : " + mavenProject.getArtifactId() + " : " + mavenProject.getVersion() + "]");
+        List<MavenPomFile> mavenPomFiles = findMavenProject.getMavenPomFiles();
+        //for (MavenPomFile mavenProject : mavenPomFiles) {
+        //    System.out.println("  path: " + mavenProject.getPath().toString());
+        //    System.out.println("  [" + mavenProject.getGroupId() + " : " + mavenProject.getArtifactId() + " : " + mavenProject.getVersion() + "]");
+        //}
+        if (optionTypes.contains(OptionType.BOUNDS)) {
+            this.strategy = this.stategyFactory.createBoundsStrategy(mavenPomFiles);
         }
+        this.strategy.process();
     }
 }

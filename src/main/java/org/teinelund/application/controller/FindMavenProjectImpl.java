@@ -1,13 +1,18 @@
 package org.teinelund.application.controller;
 
+import org.teinelund.application.controller.domain.MavenPomFile;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The aim for this class is to find Maven projects that
@@ -22,17 +27,17 @@ class FindMavenProjectImpl implements FindMavenProject {
     private PomFileReader pomFileReader;
     private Path pathToPomXmlFile;
     private Path pathToSrcDirectory;
-    private List<MavenProject> mavenProjects;
+    private List<MavenPomFile> mavenPomFiles;
 
     public FindMavenProjectImpl(List<String> pathNameList, PomFileReader pomFileReader) {
         this.pathNameList = pathNameList;
         this.pomFileReader = pomFileReader;
-        this.mavenProjects = new LinkedList<>();
+        this.mavenPomFiles = new LinkedList<>();
         for (String pathName : pathNameList) {
             try {
-                List<MavenProject> mavenProjectList = findMavenProjects(pathName);
-                if (mavenProjectList != null && !mavenProjectList.isEmpty()) {
-                    mavenProjects.addAll(mavenProjectList);
+                Set<MavenPomFile> mavenPomFiles = findMavenProjects(pathName);
+                if (mavenPomFiles != null && !mavenPomFiles.isEmpty()) {
+                    this.mavenPomFiles.addAll(mavenPomFiles);
                 }
             }
             catch (IOException e) {
@@ -43,90 +48,125 @@ class FindMavenProjectImpl implements FindMavenProject {
     }
 
     @Override
-    public List<MavenProject> getMavenProjects() {
-        return this.mavenProjects;
+    public List<MavenPomFile> getMavenPomFiles() {
+        return this.mavenPomFiles;
     }
 
-    List<MavenProject> findMavenProjects(String pathName) throws IOException {
+    Set<MavenPomFile> findMavenProjects(String pathName) throws IOException {
         Path path = Paths.get(pathName);
-        List<MavenProject> list = findMavenProjects(path);
-        return list;
+        Set<MavenPomFile> set = findMavenProjects(path);
+        return set;
     }
 
-    List<MavenProject> findMavenProjects(Path directory) throws IOException {
-        List<MavenProject> list = new LinkedList<>();
+    Set<MavenPomFile> findMavenProjects(Path directory) throws IOException {
+        Set<MavenPomFile> set = new HashSet<>();
         if (Files.isDirectory(directory)) {
-            MavenProjectStatus response = isMavenProject(directory);
-            if (response == MavenProjectStatus.LEGAL_MAVEN_PROJECT) {
-                if (containsJavaSourceFiles(getPathToSrcDirectory())) {
-                    MavenProject mavenProject = this.pomFileReader.readPomFile(this.pathToPomXmlFile);
-                    list.add(mavenProject);
+            IsMavenProjectResponse response = isMavenProject(directory);
+            if (response.getMavenProjectStatus() == MavenProjectStatus.LEGAL_MAVEN_PROJECT) {
+                if (containsJavaSourceFiles(response.getPathToSrcDirectory())) {
+                    MavenPomFile mavenPomFile = this.pomFileReader.readPomFile(response.getPathToPomXmlFile());
+                    set.add(mavenPomFile);
+                    int y = 0;
                 }
             }
             else {
                 //It is not a Maven project. Keep searching...
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-                    for (Path file : stream) {
-                        if (Files.isDirectory(file)) {
-                            list.addAll(findMavenProjects(file));
-                        }
+                File[] files = directory.toFile().listFiles();
+                for (File file : files) {
+                    if (Files.isDirectory(file.toPath())) {
+                        Set<MavenPomFile> otherSet = findMavenProjects(file.toPath());
+                        set.addAll(otherSet);
+                        int x = 0;
                     }
-                } catch (IOException | DirectoryIteratorException x) {
-                    // IOException can never be thrown by the iteration.
-                    // In this snippet, it can only be thrown by newDirectoryStream.
-                    System.err.println(x);
                 }
             }
         }
-        return list;
+        return set;
     }
 
     Path getPathToSrcDirectory() {
         return this.pathToSrcDirectory;
     }
 
-    MavenProjectStatus isMavenProject(Path directory) throws IOException {
-        MavenProjectStatus mavenProjStatus = null;
-        Files.list(directory).forEach(this::checkPathForMavenEntity);
-        if (pathToPomXmlFile != null && pathToSrcDirectory != null) {
-            mavenProjStatus = MavenProjectStatus.LEGAL_MAVEN_PROJECT;
-        }
-        else {
-            mavenProjStatus = MavenProjectStatus.NOT_A_MAVEN_PROJECT;
-        }
-        return mavenProjStatus;
+    Path getPathToPomXmlFile() {
+        return this.pathToPomXmlFile;
     }
 
-    void checkPathForMavenEntity(Path file) {
-        if ("pom.xml".equals(file.getFileName().toString())) {
-            pathToPomXmlFile = file.toAbsolutePath();
-        }
-        if ("src".equals(file.getFileName().toString())) {
-            if (Files.isDirectory(file)) {
-                pathToSrcDirectory = file;
+    IsMavenProjectResponse isMavenProject(Path directory) throws IOException {
+        IsMavenProjectResponse response = null;
+        File[] files = directory.toFile().listFiles();
+        Path pathToPomXmlFile = null;
+        Path pathToSrcDirectory = null;
+        for (File file : files) {
+            if ("pom.xml".equals(file.getName())) {
+                pathToPomXmlFile = file.toPath();
+            }
+            if ("src".equals(file.getName())) {
+                if (Files.isDirectory(file.toPath())) {
+                    pathToSrcDirectory = file.toPath();
+                }
             }
         }
+        if (pathToPomXmlFile != null && pathToSrcDirectory != null) {
+            response = IsMavenProjectResponse.legalMavenProject(pathToPomXmlFile, pathToSrcDirectory);
+        }
+        else {
+            response = IsMavenProjectResponse.notAMavenProject();
+        }
+        return response;
     }
 
     enum MavenProjectStatus {LEGAL_MAVEN_PROJECT, NOT_A_MAVEN_PROJECT; }
 
+    static class IsMavenProjectResponse {
+        private Path pathToPomXmlFile;
+        private Path pathToSrcDirectory;
+        private MavenProjectStatus mavenProjectStatus;
+
+        IsMavenProjectResponse() {
+            mavenProjectStatus = MavenProjectStatus.NOT_A_MAVEN_PROJECT;
+        }
+
+        IsMavenProjectResponse(Path pathToPomXmlFile, Path pathToSrcDirectory) {
+            mavenProjectStatus = MavenProjectStatus.LEGAL_MAVEN_PROJECT;
+            this.pathToPomXmlFile = pathToPomXmlFile;
+            this.pathToSrcDirectory = pathToSrcDirectory;
+        }
+
+        public static IsMavenProjectResponse notAMavenProject() {
+            return new IsMavenProjectResponse();
+        }
+
+        public static IsMavenProjectResponse legalMavenProject(Path pathToPomXmlFile, Path pathToSrcDirectory) {
+            return new IsMavenProjectResponse(pathToPomXmlFile, pathToSrcDirectory);
+        }
+
+        public MavenProjectStatus getMavenProjectStatus() {
+            return this.mavenProjectStatus;
+        }
+
+        public Path getPathToPomXmlFile() {
+            return this.pathToPomXmlFile;
+        }
+
+        public Path getPathToSrcDirectory() {
+            return this.pathToSrcDirectory;
+        }
+
+    }
+
 
     boolean containsJavaSourceFiles(Path dir) {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            for (Path file : stream) {
-                if (Files.isDirectory(file)) {
-                    if (containsJavaSourceFiles(file)) {
-                        return true;
-                    }
-                }
-                else if (file.getFileName().toString().endsWith(".java")) {
+        File[] files = dir.toFile().listFiles();
+        for (File file : files) {
+            if (Files.isDirectory(file.toPath())) {
+                if (containsJavaSourceFiles(file.toPath())) {
                     return true;
                 }
             }
-        } catch (IOException | DirectoryIteratorException x) {
-            // IOException can never be thrown by the iteration.
-            // In this snippet, it can only be thrown by newDirectoryStream.
-            System.err.println(x);
+            else if (file.getName().endsWith(".java")) {
+                return true;
+            }
         }
         return false;
     }

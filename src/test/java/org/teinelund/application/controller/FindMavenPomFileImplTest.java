@@ -2,6 +2,8 @@ package org.teinelund.application.controller;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.teinelund.application.controller.domain.MavenPomFile;
+import org.teinelund.application.controller.domain.MavenPomFileImpl;
 import org.teinelund.application.extension.TemporaryFolder;
 import org.teinelund.application.extension.TemporaryFolderExtension;
 
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(TemporaryFolderExtension.class)
-class FindMavenProjectImplTest {
+class FindMavenPomFileImplTest {
 
     private TemporaryFolder temporaryFolder = new TemporaryFolder();
     private FindMavenProjectImpl findMavenProject = new FindMavenProjectImpl(new LinkedList<>(), null);
@@ -24,9 +26,9 @@ class FindMavenProjectImplTest {
         // Initialize
         Path theProject = createLegalMavenProject("theProject", AddSourceFile.NO_ADDITIONAL_FILES);
         // Test
-        FindMavenProjectImpl.MavenProjectStatus result = findMavenProject.isMavenProject(theProject);
+        FindMavenProjectImpl.IsMavenProjectResponse result = findMavenProject.isMavenProject(theProject);
         // Verify
-        assertEquals(FindMavenProjectImpl.MavenProjectStatus.LEGAL_MAVEN_PROJECT, result);  //JUnit
+        assertEquals(FindMavenProjectImpl.MavenProjectStatus.LEGAL_MAVEN_PROJECT, result.getMavenProjectStatus());  //JUnit
     }
 
     enum AddSourceFile {NO_ADDITIONAL_FILES, PROPERTIES_FILE, JSON_FILE;}
@@ -53,9 +55,9 @@ class FindMavenProjectImplTest {
         // Initialize
         Path theProject = createIllegalMavenProject("theProject", MissingMavenEntity.MISSING_SRC_FOLDER);
         // Test
-        FindMavenProjectImpl.MavenProjectStatus result = findMavenProject.isMavenProject(theProject);
+        FindMavenProjectImpl.IsMavenProjectResponse result = findMavenProject.isMavenProject(theProject);
         // Verify
-        assertEquals(FindMavenProjectImpl.MavenProjectStatus.NOT_A_MAVEN_PROJECT, result);  //JUnit
+        assertEquals(FindMavenProjectImpl.MavenProjectStatus.NOT_A_MAVEN_PROJECT, result.getMavenProjectStatus());  //JUnit
     }
 
     enum MissingMavenEntity {MISSING_SRC_FOLDER, MISSING_POM_FILE, MISSING_JAVA_FILE;}
@@ -77,9 +79,9 @@ class FindMavenProjectImplTest {
         // Initialize
         Path theProject = createIllegalMavenProject("theProject", MissingMavenEntity.MISSING_POM_FILE);
         // Test
-        FindMavenProjectImpl.MavenProjectStatus result = findMavenProject.isMavenProject(theProject);
+        FindMavenProjectImpl.IsMavenProjectResponse result = findMavenProject.isMavenProject(theProject);
         // Verify
-        assertEquals(FindMavenProjectImpl.MavenProjectStatus.NOT_A_MAVEN_PROJECT, result);  //JUnit
+        assertEquals(FindMavenProjectImpl.MavenProjectStatus.NOT_A_MAVEN_PROJECT, result.getMavenProjectStatus());  //JUnit
     }
 
     @Test
@@ -131,7 +133,7 @@ class FindMavenProjectImplTest {
         // Test
         FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
         // Verify
-        assertTrue(stub.getMavenProjects().isEmpty());  //JUnit
+        assertTrue(stub.getMavenPomFiles().isEmpty());  //JUnit
     }
 
 
@@ -144,7 +146,7 @@ class FindMavenProjectImplTest {
         // Test
         FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
         // Verify
-        assertEquals(EXPECTED_SIZE, stub.getMavenProjects().size());  //JUnit
+        assertEquals(EXPECTED_SIZE, stub.getMavenPomFiles().size());  //JUnit
     }
 
     @Test
@@ -155,7 +157,7 @@ class FindMavenProjectImplTest {
         // Test
         FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
         // Verify
-        assertTrue(stub.getMavenProjects().isEmpty());
+        assertTrue(stub.getMavenPomFiles().isEmpty());
     }
 
     @Test
@@ -168,7 +170,7 @@ class FindMavenProjectImplTest {
         // Test
         FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
         // Verify
-        assertEquals(EXPECTED_SIZE, stub.getMavenProjects().size());  //JUnit
+        assertEquals(EXPECTED_SIZE, stub.getMavenPomFiles().size());  //JUnit
     }
 
 
@@ -181,7 +183,7 @@ class FindMavenProjectImplTest {
         // Test
         FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
         // Verify
-        assertEquals(EXPECTED_SIZE, stub.getMavenProjects().size());  //JUnit
+        assertEquals(EXPECTED_SIZE, stub.getMavenPomFiles().size());  //JUnit
     }
 
     Path createMavenProjectFolder(String projectName, boolean isModule) throws IOException {
@@ -203,21 +205,23 @@ class FindMavenProjectImplStub extends FindMavenProjectImpl {
 
     Path pathToSrcDirectory;
     boolean containsJavaSourceFile = true;
+    Path pathToPomXmlFile;
 
     public FindMavenProjectImplStub(List<String> pathNameList) {
         super(pathNameList, new PomFileReaderStub());
     }
 
     @Override
-    MavenProjectStatus isMavenProject(Path directory) throws IOException {
+    IsMavenProjectResponse isMavenProject(Path directory) throws IOException {
+        this.pathToPomXmlFile = directory;
         containsJavaSourceFile = true;
         if (directory.toString().endsWith("invoice")) {
-            return MavenProjectStatus.NOT_A_MAVEN_PROJECT;
+            return IsMavenProjectResponse.notAMavenProject();
         }
         if (directory.toString().endsWith("invoiceInterface") || directory.toString().endsWith("invoice")) {
             this.containsJavaSourceFile = false;
         }
-        return MavenProjectStatus.LEGAL_MAVEN_PROJECT;
+        return IsMavenProjectResponse.legalMavenProject(this.pathToPomXmlFile, this.pathToSrcDirectory);
     }
 
     @Override
@@ -229,12 +233,17 @@ class FindMavenProjectImplStub extends FindMavenProjectImpl {
     Path getPathToSrcDirectory() {
         return this.pathToSrcDirectory;
     }
+
+    @Override
+    Path getPathToPomXmlFile() {
+        return this.pathToPomXmlFile;
+    }
 }
 
 class PomFileReaderStub implements PomFileReader {
 
     @Override
-    public MavenProject readPomFile(Path mavenPomFilePath) throws IOException {
-        return new MavenProjectImpl(null, null, null, null);
+    public MavenPomFile readPomFile(Path mavenPomFilePath) throws IOException {
+        return new MavenPomFileImpl(mavenPomFilePath, null, null, null);
     }
 }
