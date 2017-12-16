@@ -13,11 +13,11 @@ import java.util.Set;
 public class MavenProjectImpl implements MavenProject {
 
     private MavenPomFile mavenPomFile;
-    private List<Path> javaSourceCodePaths;
+    private Set<Path> javaSourceCodePaths;
     private Map<String, Set<BoundProperty>> boundPropertiesMap;
 
 
-    public MavenProjectImpl(MavenPomFile mavenPomFile, List<Path> javaSourceCodePaths) {
+    public MavenProjectImpl(MavenPomFile mavenPomFile, Set<Path> javaSourceCodePaths) {
         this.mavenPomFile = mavenPomFile;
         this.javaSourceCodePaths = javaSourceCodePaths;
         this.boundPropertiesMap = new HashMap<>();
@@ -29,8 +29,8 @@ public class MavenProjectImpl implements MavenProject {
     }
 
     @Override
-    public List<Path> getJavaSourceCodePaths() {
-        return Collections.unmodifiableList(this.javaSourceCodePaths);
+    public Set<Path> getJavaSourceCodePaths() {
+        return Collections.unmodifiableSet(this.javaSourceCodePaths);
     }
 
     @Override

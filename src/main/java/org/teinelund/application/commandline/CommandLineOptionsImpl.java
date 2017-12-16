@@ -2,6 +2,7 @@ package org.teinelund.application.commandline;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -95,24 +96,24 @@ public class CommandLineOptionsImpl implements CommandLineOptions {
     }
 
     @Override
-    public List<String> getCommandLineOptionValue(OptionType optionType) {
+    public Set<String> getCommandLineOptionValue(OptionType optionType) {
         if (!this.options.containsKey(optionType))
             throw new ApplicationException("Optione Type " + optionType.toString() + " does not exist among the command line parameters.");
         if (this.options.get(optionType).isEmpty()) {
-            return new LinkedList<>();
+            return new HashSet<>();
         }
         else {
-            List<String> list = new LinkedList<>();
+            Set<String> set = new HashSet<>();
             for (String value : this.options.get(optionType)) {
                 if (value.contains(",")) {
                     String[] splits = value.split(",");
-                    list.addAll(Arrays.asList(splits));
+                    set.addAll(Arrays.asList(splits));
                 }
                 else {
-                    list.add(value);
+                    set.add(value);
                 }
             }
-            return list;
+            return set;
         }
 
     }

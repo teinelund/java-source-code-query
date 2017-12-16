@@ -12,7 +12,7 @@ import java.util.Set;
 
 class BoundsStrategy extends AbstractStrategy {
 
-    public BoundsStrategy(List<MavenPomFile> mavenPomFiles, Printable printable) {
+    public BoundsStrategy(Set<MavenPomFile> mavenPomFiles, Printable printable) {
         super(mavenPomFiles, printable);
     }
 

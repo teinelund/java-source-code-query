@@ -80,9 +80,9 @@ class CommandLineOptionsImplTest {
         CommandLineOptions options = new CommandLineOptionsImpl(args);
         final int expectedSize = 1;
         // Test
-        List<String> result = options.getCommandLineOptionValue(OptionType.PROJECT);
+        Set<String> result = options.getCommandLineOptionValue(OptionType.PROJECT);
         // Verify
-        assertEquals(PROJECT_VALUE, result.get(0));
+        assertTrue(result.contains(PROJECT_VALUE));
         assertEquals(expectedSize, result.size());
     }
 
@@ -93,9 +93,9 @@ class CommandLineOptionsImplTest {
         CommandLineOptions options = new CommandLineOptionsImpl(args);
         final int expectedSize = 1;
         // Test
-        List<String> result = options.getCommandLineOptionValue(OptionType.PROJECT);
+        Set<String> result = options.getCommandLineOptionValue(OptionType.PROJECT);
         // Verify
-        assertEquals(PROJECT_VALUE, result.get(0));
+        assertTrue(result.contains(PROJECT_VALUE));
         assertEquals(expectedSize, result.size());
     }
 
@@ -119,12 +119,12 @@ class CommandLineOptionsImplTest {
         CommandLineOptions options = new CommandLineOptionsImpl(args);
         final int expectedSize = 3;
         // Test
-        List<String> result = options.getCommandLineOptionValue(OptionType.PROJECT);
+        Set<String> result = options.getCommandLineOptionValue(OptionType.PROJECT);
         // Verify
         assertEquals(expectedSize, result.size());
-        assertEquals(PROJECT_VALUE_A, result.get(0));
-        assertEquals(PROJECT_VALUE_B1, result.get(1));
-        assertEquals(PROJECT_VALUE_B2, result.get(2));
+        assertTrue(result.contains(PROJECT_VALUE_A));
+        assertTrue(result.contains(PROJECT_VALUE_B1));
+        assertTrue(result.contains(PROJECT_VALUE_B2));
     }
 
     @Test

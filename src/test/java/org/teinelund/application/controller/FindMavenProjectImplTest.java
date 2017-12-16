@@ -10,16 +10,18 @@ import org.teinelund.application.extension.TemporaryFolderExtension;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(TemporaryFolderExtension.class)
-class FindMavenPomFileImplTest {
+class FindMavenProjectImplTest {
 
     private TemporaryFolder temporaryFolder = new TemporaryFolder();
-    private FindMavenProjectImpl findMavenProject = new FindMavenProjectImpl(new LinkedList<>(), null);
+    private FindMavenProjectImpl findMavenProject = new FindMavenProjectImpl(new HashSet<>(), null);
 
     @Test
     public void isMavenProjectWhereFolderIsLegalMavenProject() throws IOException {
@@ -129,9 +131,9 @@ class FindMavenPomFileImplTest {
     @Test
     public void constructorWherePathNameListIsEmpty() throws IOException {
         // Initialize
-        List<String> pathNameList = new LinkedList<>();
+        Set<String> projectPathNames = new HashSet<>();
         // Test
-        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
+        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(projectPathNames);
         // Verify
         assertTrue(stub.getMavenPomFiles().isEmpty());  //JUnit
     }
@@ -140,11 +142,11 @@ class FindMavenPomFileImplTest {
     @Test
     public void constructorWherePathNameListContainsOneLegalPath() throws IOException {
         // Initialize
-        List<String> pathNameList = new LinkedList<>();
-        pathNameList.add(createMavenProjectFolder("theProject", false).toString());
+        Set<String> projectPathNames = new HashSet<>();
+        projectPathNames.add(createMavenProjectFolder("theProject", false).toString());
         final int EXPECTED_SIZE = 1;
         // Test
-        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
+        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(projectPathNames);
         // Verify
         assertEquals(EXPECTED_SIZE, stub.getMavenPomFiles().size());  //JUnit
     }
@@ -152,10 +154,10 @@ class FindMavenPomFileImplTest {
     @Test
     public void constructorWherePathNameListContainsOneNonLegalPath() throws IOException {
         // Initialize
-        List<String> pathNameList = new LinkedList<>();
-        pathNameList.add(createMavenProjectFolder("invoice", false).toString());
+        Set<String> projectPathNames = new HashSet<>();
+        projectPathNames.add(createMavenProjectFolder("invoice", false).toString());
         // Test
-        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
+        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(projectPathNames);
         // Verify
         assertTrue(stub.getMavenPomFiles().isEmpty());
     }
@@ -163,12 +165,12 @@ class FindMavenPomFileImplTest {
     @Test
     public void constructorWherePathNameListContainsTwoLegalPath() throws IOException {
         // Initialize
-        List<String> pathNameList = new LinkedList<>();
-        pathNameList.add(createMavenProjectFolder("invoiceResource", false).toString());
-        pathNameList.add(createMavenProjectFolder("invoiceDAO", false).toString());
+        Set<String> projectPathNames = new HashSet<>();
+        projectPathNames.add(createMavenProjectFolder("invoiceResource", false).toString());
+        projectPathNames.add(createMavenProjectFolder("invoiceDAO", false).toString());
         final int EXPECTED_SIZE = 2;
         // Test
-        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
+        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(projectPathNames);
         // Verify
         assertEquals(EXPECTED_SIZE, stub.getMavenPomFiles().size());  //JUnit
     }
@@ -177,11 +179,11 @@ class FindMavenPomFileImplTest {
     @Test
     public void constructorWherePathNameListContainsMavenModules() throws IOException {
         // Initialize
-        List<String> pathNameList = new LinkedList<>();
-        pathNameList.add(createMavenProjectFolder("invoice", true).toString());
+        Set<String> projectPathNames = new HashSet<>();
+        projectPathNames.add(createMavenProjectFolder("invoice", true).toString());
         final int EXPECTED_SIZE = 3;
         // Test
-        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(pathNameList);
+        FindMavenProjectImplStub stub = new FindMavenProjectImplStub(projectPathNames);
         // Verify
         assertEquals(EXPECTED_SIZE, stub.getMavenPomFiles().size());  //JUnit
     }
@@ -207,8 +209,8 @@ class FindMavenProjectImplStub extends FindMavenProjectImpl {
     boolean containsJavaSourceFile = true;
     Path pathToPomXmlFile;
 
-    public FindMavenProjectImplStub(List<String> pathNameList) {
-        super(pathNameList, new PomFileReaderStub());
+    public FindMavenProjectImplStub(Set<String> projectPathNames) {
+        super(projectPathNames, new PomFileReaderStub());
     }
 
     @Override

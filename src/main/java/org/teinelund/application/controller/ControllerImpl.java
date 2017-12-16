@@ -35,16 +35,18 @@ class ControllerImpl implements Controller {
             strategy.process();
             return;
         }
-        List<String> projects = options.getCommandLineOptionValue(OptionType.PROJECT);
+        Set<String> projectPathNames = options.getCommandLineOptionValue(OptionType.PROJECT);
         PomFileReader reader = new PomFileReaderImpl();
-        FindMavenProject findMavenProject = new FindMavenProjectImpl(projects, reader);
-        List<MavenPomFile> mavenPomFiles = findMavenProject.getMavenPomFiles();
-        //for (MavenPomFile mavenProject : mavenPomFiles) {
-        //    System.out.println("  path: " + mavenProject.getPath().toString());
-        //    System.out.println("  [" + mavenProject.getGroupId() + " : " + mavenProject.getArtifactId() + " : " + mavenProject.getVersion() + "]");
-        //}
+        FindMavenProject findMavenProject = new FindMavenProjectImpl(projectPathNames, reader);
+        Set<MavenPomFile> mavenPomFiles = findMavenProject.getMavenPomFiles();
         if (optionTypes.contains(OptionType.BOUNDS)) {
-            this.strategy = this.stategyFactory.createBoundsStrategy(mavenPomFiles);
+            this.strategy = this.stategyFactory.createBoundsStrategy(mavenPomFiles, optionTypes);
+        }
+        else if (optionTypes.contains(OptionType.INBOUND)) {
+            this.strategy = this.stategyFactory.createInBoundStrategy(mavenPomFiles, optionTypes);
+        }
+        else if (optionTypes.contains(OptionType.OUTBOUND)) {
+            this.strategy = this.stategyFactory.createOutBoundStrategy(mavenPomFiles, optionTypes);
         }
         this.strategy.process();
     }

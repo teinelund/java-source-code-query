@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,9 +33,9 @@ class AbstractStrategyTest {
         // Initialize
         File srcFile = temporaryFolder.newFolder("project", "src");
         // Test
-        abstractStrategy.findSrcFolder(srcFile.toPath());
+        Path srcFolderPath = abstractStrategy.findSrcFolder(srcFile.toPath().getParent());
         // Verify
-        assertNotNull(abstractStrategy.getPathToSrcDirectory());
+        assertNotNull(srcFolderPath);
     }
 
     @Test
@@ -42,24 +43,24 @@ class AbstractStrategyTest {
         // Initialize
         File srcFile = temporaryFolder.newFolder("project", "target");
         // Test
-        abstractStrategy.findSrcFolder(srcFile.toPath());
+        Path srcFolderPath = abstractStrategy.findSrcFolder(srcFile.toPath().getParent());
         // Verify
-        assertNull(abstractStrategy.getPathToSrcDirectory());
+        assertNull(srcFolderPath);
     }
 
     @Test
     public void iterateSrcFolder() throws IOException {
         // Initialize
         // Test
-        abstractStrategy.iterateSrcFolder(null, createProject());
-        List<Path> paths = abstractStrategy.getJavaSourceFiles();
+        MavenProject mavenProject = abstractStrategy.iterateSrcFolder(null, createProject());
         // Verify
-        assertNotNull(paths);
-        assertFalse(paths.isEmpty());
-        assertTrue(contains("project" + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + "domain" + File.separator + "Document.java", paths));
-        assertTrue(contains("project" + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + "domain" + File.separator + "Invoice.java", paths));
-        assertTrue(contains("project" + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + "Application.java", paths));
-        assertTrue(contains("project" + File.separator + "src" + File.separator + "test" + File.separator + "java" + File.separator + "ApplicationTest.java", paths));
+        assertNotNull(mavenProject);
+        assertNotNull(mavenProject.getJavaSourceCodePaths());
+        assertFalse(mavenProject.getJavaSourceCodePaths().isEmpty());
+        assertTrue(contains("project" + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + "domain" + File.separator + "Document.java", mavenProject.getJavaSourceCodePaths()));
+        assertTrue(contains("project" + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + "domain" + File.separator + "Invoice.java", mavenProject.getJavaSourceCodePaths()));
+        assertTrue(contains("project" + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + "Application.java", mavenProject.getJavaSourceCodePaths()));
+        assertTrue(contains("project" + File.separator + "src" + File.separator + "test" + File.separator + "java" + File.separator + "ApplicationTest.java", mavenProject.getJavaSourceCodePaths()));
 
 
 
@@ -79,7 +80,7 @@ class AbstractStrategyTest {
         return projectFile.toPath();
     }
 
-    boolean contains(String fileName, List<Path> paths) {
+    boolean contains(String fileName, Set<Path> paths) {
         for (Path path : paths) {
             if (path.toString().endsWith(fileName))
                 return true;
@@ -91,7 +92,7 @@ class AbstractStrategyTest {
 
 class AbstractStrategyStub extends AbstractStrategy {
 
-    public AbstractStrategyStub(List<MavenPomFile> mavenPomFiles, Printable printable) {
+    public AbstractStrategyStub(Set<MavenPomFile> mavenPomFiles, Printable printable) {
         super(mavenPomFiles, printable);
     }
 
@@ -105,7 +106,7 @@ class AbstractStrategyStub extends AbstractStrategy {
 class PrintableStub implements Printable {
 
     @Override
-    public void print(List<MavenProject> mavenProjects) {
+    public void print(Set<MavenProject> mavenProjects) {
 
     }
 }

@@ -4,8 +4,6 @@ import org.teinelund.application.controller.domain.MavenPomFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,49 +13,67 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The aim for this class is to find Maven projects that
- * 1) has a 'pom.xml' file
- * 2) has a 'src'-folder with '*.java' files in it.
+ * The aim for this class is to find Maven projects that contains
+ * - a 'pom.xml' file.
+ * - a folder with the name 'src'.
+ * - the folder 'src' contains java source file/files.
  *
  * @author Henrik Teinelund
  */
 class FindMavenProjectImpl implements FindMavenProject {
 
-    private List<String> pathNameList;
+    private Set<String> projectPathNames;
     private PomFileReader pomFileReader;
     private Path pathToPomXmlFile;
     private Path pathToSrcDirectory;
-    private List<MavenPomFile> mavenPomFiles;
+    private Set<MavenPomFile> mavenPomFiles;
 
-    public FindMavenProjectImpl(List<String> pathNameList, PomFileReader pomFileReader) {
-        this.pathNameList = pathNameList;
+    public FindMavenProjectImpl(Set<String> projectPathNames, PomFileReader pomFileReader) {
+        this.projectPathNames = projectPathNames;
         this.pomFileReader = pomFileReader;
-        this.mavenPomFiles = new LinkedList<>();
-        for (String pathName : pathNameList) {
+        this.mavenPomFiles = new HashSet<>();
+        for (String projectPathName : projectPathNames) {
             try {
-                Set<MavenPomFile> mavenPomFiles = findMavenProjects(pathName);
+                Set<MavenPomFile> mavenPomFiles = findMavenProjects(projectPathName);
                 if (mavenPomFiles != null && !mavenPomFiles.isEmpty()) {
                     this.mavenPomFiles.addAll(mavenPomFiles);
                 }
             }
             catch (IOException e) {
-                System.err.println("IOException for path name " + pathName + ". " + e.getMessage());
+                System.err.println("IOException for path name " + projectPathName + ". " + e.getMessage());
                 System.err.println(e);
             }
         }
     }
 
+    /**
+     * Returns the set of found legal Maven Projects. That is, all Maven Projects containing
+     * - a 'pom.xml' file.
+     * - a folder with the name 'src'.
+     * - the folder 'src' contains java source file/files.
+     * @return Set<MavenPomFile> is the set of legal Maven Projects.
+     */
     @Override
-    public List<MavenPomFile> getMavenPomFiles() {
+    public Set<MavenPomFile> getMavenPomFiles() {
         return this.mavenPomFiles;
     }
 
-    Set<MavenPomFile> findMavenProjects(String pathName) throws IOException {
-        Path path = Paths.get(pathName);
+    Set<MavenPomFile> findMavenProjects(String projectPathName) throws IOException {
+        Path path = Paths.get(projectPathName);
         Set<MavenPomFile> set = findMavenProjects(path);
         return set;
     }
 
+    /**
+     * The set of Maven Pom Files will be Maven Project that contains
+     * - a 'pom.xml' file.
+     * - folder with the name 'src'.
+     * - the folder 'src' contains at least one '*.java' file.
+     *
+     * @param directory
+     * @return
+     * @throws IOException
+     */
     Set<MavenPomFile> findMavenProjects(Path directory) throws IOException {
         Set<MavenPomFile> set = new HashSet<>();
         if (Files.isDirectory(directory)) {
@@ -66,7 +82,6 @@ class FindMavenProjectImpl implements FindMavenProject {
                 if (containsJavaSourceFiles(response.getPathToSrcDirectory())) {
                     MavenPomFile mavenPomFile = this.pomFileReader.readPomFile(response.getPathToPomXmlFile());
                     set.add(mavenPomFile);
-                    int y = 0;
                 }
             }
             else {
@@ -76,7 +91,6 @@ class FindMavenProjectImpl implements FindMavenProject {
                     if (Files.isDirectory(file.toPath())) {
                         Set<MavenPomFile> otherSet = findMavenProjects(file.toPath());
                         set.addAll(otherSet);
-                        int x = 0;
                     }
                 }
             }
@@ -92,6 +106,15 @@ class FindMavenProjectImpl implements FindMavenProject {
         return this.pathToPomXmlFile;
     }
 
+    /**
+     * A legal Maven Project, in this application, is a project which contains
+     * - a file named pom.xml
+     * - a folder with the name src
+     *
+     * @param directory to be investigated if it is a legal Maven Project.
+     * @return IsMavenProjectResponse
+     * @throws IOException
+     */
     IsMavenProjectResponse isMavenProject(Path directory) throws IOException {
         IsMavenProjectResponse response = null;
         File[] files = directory.toFile().listFiles();
@@ -118,6 +141,10 @@ class FindMavenProjectImpl implements FindMavenProject {
 
     enum MavenProjectStatus {LEGAL_MAVEN_PROJECT, NOT_A_MAVEN_PROJECT; }
 
+    /**
+     * Container class that holds Maven Project Status (legal maven project or not) and
+     * path to pom xml file and path to src folder.
+     */
     static class IsMavenProjectResponse {
         private Path pathToPomXmlFile;
         private Path pathToSrcDirectory;

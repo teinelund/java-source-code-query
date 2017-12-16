@@ -3,7 +3,8 @@ package org.teinelund.application.controller;
 import org.teinelund.application.controller.domain.MavenPomFile;
 
 import java.util.List;
+import java.util.Set;
 
 public interface FindMavenProject {
-    public List<MavenPomFile> getMavenPomFiles();
+    public Set<MavenPomFile> getMavenPomFiles();
 }

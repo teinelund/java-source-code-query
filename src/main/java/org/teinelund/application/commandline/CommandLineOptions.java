@@ -23,7 +23,15 @@ public interface CommandLineOptions {
 
     public Set<OptionType> getOptionTypes();
 
-    public List<String> getCommandLineOptionValue(OptionType optionType);
+    /**
+     * Returns a set of values, given an option.
+     *
+     * Given an OptionType, say OptionType.PROJECT, the method returns a set of values for the option.
+     *
+     * @param optionType
+     * @return a set of strings representing all the values for the option.
+     */
+    public Set<String> getCommandLineOptionValue(OptionType optionType);
 
     public void createHelpFormatter(String header, String footer);
 

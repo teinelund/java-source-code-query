@@ -8,7 +8,7 @@ import java.util.Set;
 
 public interface MavenProject {
     public MavenPomFile getMavenPomFile();
-    public List<Path> getJavaSourceCodePaths();
+    public Set<Path> getJavaSourceCodePaths();
     public void setBoundProperties(Path javaSourceCodePath, Set<BoundProperty> boundProperties);
     public Set<BoundProperty> getAllBoundaries();
 }
